@@ -98,45 +98,45 @@ class PrivateTagsApiTests(TestCase):
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
-    def test_filter_tags_assigned_to_recipe(self):
-        """Test listing tags to those assigned"""
-        tag1 = Tag.objects.create(user=self.user, name='Breakfast')
-        tag = Tag.objects.create(user=self.user, name='Lunch')
 
+    def test_filter_tags_assigned_to_recipes(self):
+        """Test listing tags to those assigned to recipes."""
+        tag1 = Tag.objects.create(user=self.user, name='Breakfast')
+        tag2 = Tag.objects.create(user=self.user, name='Lunch')
         recipe = Recipe.objects.create(
             title='Green Eggs on Toast',
             time_minutes=10,
             price=Decimal('2.50'),
             user=self.user,
         )
+        recipe.tags.add(tag1)
 
-        recipe.tags.add(tag)
         res = self.client.get(TAGS_URL, {'assigned_only': 1})
 
-        s = TagSerializer(tag)
         s1 = TagSerializer(tag1)
-        self.assertIn(s.data, res.data)
-        self.assertNotIn(s1.data, res.data)
+        s2 = TagSerializer(tag2)
+        self.assertIn(s1.data, res.data)
+        self.assertNotIn(s2.data, res.data)
 
-    def test_filter_unique(self):
-        """Test filtered tags return a unique"""
-        tag = Tag.objects.create(user=self.user, name='breakfast')
+    def test_filtered_tags_unique(self):
+        """Test filtered tags returns a unique list."""
+        tag = Tag.objects.create(user=self.user, name='Breakfast')
         Tag.objects.create(user=self.user, name='Dinner')
-        recipe = Recipe.objects.create(
+        recipe1 = Recipe.objects.create(
             title='Pancakes',
             time_minutes=5,
             price=Decimal('5.00'),
-            user=self.user
+            user=self.user,
         )
-
-        recipe1 = Recipe.objects.create(
+        recipe2 = Recipe.objects.create(
             title='Porridge',
             time_minutes=3,
             price=Decimal('2.00'),
-            user=self.user
+            user=self.user,
         )
-        recipe.tags.add(tag)
         recipe1.tags.add(tag)
+        recipe2.tags.add(tag)
 
         res = self.client.get(TAGS_URL, {'assigned_only': 1})
+
         self.assertEqual(len(res.data), 1)

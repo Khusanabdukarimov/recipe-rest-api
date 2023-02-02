@@ -96,44 +96,43 @@ class PrivateIngredientsApiTest(TestCase):
         ingredients = Ingredient.objects.filter(user=self.user)
         self.assertFalse(ingredients.exists())
 
-    def test_filter_ingredients_assigned_to_recipe(self):
-        """Test listing ingredients by those assigned to recipe"""
-        in_ = Ingredient.objects.create(user=self.user, name='apples')
-        in1 = Ingredient.objects.create(user=self.user, name='Turkey')
+    def test_filter_ingredients_assigned_to_recipes(self):
+        """Test listing ingedients to those assigned to recipes."""
+        in1 = Ingredient.objects.create(user=self.user, name='Apples')
+        in2 = Ingredient.objects.create(user=self.user, name='Turkey')
         recipe = Recipe.objects.create(
             title='Apple Crumble',
             time_minutes=5,
             price=Decimal('4.50'),
             user=self.user,
         )
-
-        recipe.ingredients.add(in_)
+        recipe.ingredients.add(in1)
 
         res = self.client.get(INGREDIENT_URL, {'assigned_only': 1})
 
-        s = IngredientSerializer(in_)
         s1 = IngredientSerializer(in1)
-        self.assertIn(s.data, res.data)
-        self.assertNotIn(s1.data, res.data)
+        s2 = IngredientSerializer(in2)
+        self.assertIn(s1.data, res.data)
+        self.assertNotIn(s2.data, res.data)
 
-    def test_filtered_ingredient_unique(self):
-        """Test filtered ingredient returns a unique list"""
+    def test_filtered_ingredients_unique(self):
+        """Test filtered ingredients returns a unique list."""
         ing = Ingredient.objects.create(user=self.user, name='Eggs')
         Ingredient.objects.create(user=self.user, name='Lentils')
-        recipe = Recipe.objects.create(
-            title='herb Eggs',
-            time_minutes=20,
-            price=Decimal('4.00'),
-            user=self.user
-        )
         recipe1 = Recipe.objects.create(
             title='Eggs Benedict',
             time_minutes=60,
             price=Decimal('7.00'),
-            user=self.user
+            user=self.user,
         )
-        recipe.ingredients.add(ing)
+        recipe2 = Recipe.objects.create(
+            title='Herb Eggs',
+            time_minutes=20,
+            price=Decimal('4.00'),
+            user=self.user,
+        )
         recipe1.ingredients.add(ing)
+        recipe2.ingredients.add(ing)
 
         res = self.client.get(INGREDIENT_URL, {'assigned_only': 1})
 
